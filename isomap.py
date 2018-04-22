@@ -31,7 +31,7 @@ def main():
     data = np.column_stack((x,y))
     df = pandas.DataFrame(data, columns=['xcord', 'ycord'])
 
-    dist_matrix = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index)
+    dist_matrix = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index).values
 
     print(df)
     print(dist_matrix)
@@ -44,8 +44,8 @@ def main():
     dp = gradient_descent(b, args.out_dim, z)
     print(dp)
 
-def gradient_descent(distance_matrix, dim, color):
-	datapoints = distance_matrix.shape[0]
+def gradient_descent(D0, dim, color):
+	datapoints = D0.shape[0]
 	print("datapoints " + str(datapoints))
 
 	print("out dim " + str(dim))
@@ -56,51 +56,27 @@ def gradient_descent(distance_matrix, dim, color):
 	print("X: ")
 	print(X)
 	print("D: ")
-	for iteration in range(0, 15):
+	for iteration in range(0, 100):
 		print("Iteration: ")
 		print(iteration)
 		#update distance matrix
-		for i in range(0, datapoints):
-			vec_i = X[i,:]
-			for j in range(0, datapoints):
-				vec_j = X[j,:]
-				#difference = vec_i - vec_j
-				D[i,j] = math.sqrt((X[i,0]-X[j,0])*(X[i,0]-X[j,0])+(X[i,1]-X[j,1])*(X[i,1]-X[j,1]))
-				#D[i,j] = np.linalg.norm(difference)
+
+		df = pandas.DataFrame(X, columns=['xcord', 'ycord'])
+		D = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index).values
 
 		print("D: ")
 		print(D)
-		gradient = np.zeros((datapoints, dim))
 
-		i = 0
-
-		for point1 in range(0, datapoints):
-			for point2 in range(0, datapoints):
-				if point1 != point2:
-					for dimension in range(0, dim):
-						i += 1
-						if i % 10000 == 0:
-							print("i : " + str(i))
-						addition = 2 * (distance_matrix[point1, point2] - D[point1,point2])
-						addition = - addition * (X[point1,dimension] - X[point2,dimension]) / D[point1,point2]
-						gradient[point1,dimension] = gradient[point1,dimension] + addition
-
-		magnitude = math.sqrt(np.sum(gradient**2))
-		gradient = gradient / magnitude
-
-		d_d = (distance_matrix - D) / D
+		d_d = (D0 - D) / D
 		np.fill_diagonal(d_d,0)
 
 		d_d_rowsum = d_d @ np.ones((datapoints,dim))
-		print(d_d_rowsum)
-		gradient2 = (d_d @ X - d_d_rowsum * X)* 2
-		magnitude2 = math.sqrt(np.sum(gradient2**2))
-		gradient2 = gradient2 / magnitude2
+		gradient = (d_d @ X - d_d_rowsum * X)* 2
+		magnitude = math.sqrt(np.sum(gradient**2))
+		gradient = gradient / magnitude
 		print(d_d)
 		print("gradient: ")
 		print(gradient)
-		print("gradient2: ")
-		print(gradient2)
 		#gradient2 = 
 		X = X - (gradient * 0.8)
 
