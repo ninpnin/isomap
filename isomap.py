@@ -33,7 +33,6 @@ def main():
 
     dist_matrix = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index)
 
-    
     print(df)
     print(dist_matrix)
     #a = np.column_stack((x, y))
@@ -88,6 +87,21 @@ def gradient_descent(distance_matrix, dim, color):
 
 		magnitude = math.sqrt(np.sum(gradient**2))
 		gradient = gradient / magnitude
+
+		d_d = (distance_matrix - D) / D
+		np.fill_diagonal(d_d,0)
+
+		d_d_rowsum = d_d @ np.ones((datapoints,dim))
+		print(d_d_rowsum)
+		gradient2 = (d_d @ X - d_d_rowsum * X)* 2
+		magnitude2 = math.sqrt(np.sum(gradient2**2))
+		gradient2 = gradient2 / magnitude2
+		print(d_d)
+		print("gradient: ")
+		print(gradient)
+		print("gradient2: ")
+		print(gradient2)
+		#gradient2 = 
 		X = X - (gradient * 0.8)
 
 	print("Updated X: ")
