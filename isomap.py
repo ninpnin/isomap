@@ -14,7 +14,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', type=str, default="toydata.csv", help='path of data file')
-    parser.add_argument('--k', type=str, default=10, help='number of nearest neighbors for the k-means')
+    parser.add_argument('--k', type=str, default=11, help='number of nearest neighbors for the k-means')
     parser.add_argument('--out_dim', type=str, default=2, help='dimensionality of the output')
     args = parser.parse_args()
 
@@ -35,10 +35,24 @@ def main():
 
     print(df)
     print(dist_matrix)
+
+    print(dist_matrix)
+
+    D0 = np.zeros(dist_matrix.shape)
+
+    for index in range(0, dist_matrix.shape[0]):
+    	vector = dist_matrix[:,index]
+    	k_smallest = np.argpartition(vector, args.k)[:args.k]
+    	print(args.k+1)
+    	for k_index in k_smallest:
+    		D0[k_index, index] = dist_matrix[k_index, index]
+
+    print("D0:")
+    print(D0)
     #a = np.column_stack((x, y))
     a = np.array([[0,1,1,1],[1,0,1,1],[1,1,0,1],[1,1,1,0]])
     print(a)
-    b = sparse.csgraph.shortest_path(dist_matrix,'D',False)
+    b = sparse.csgraph.shortest_path(D0,'D',False)
     print(b)
 
     dp = gradient_descent(b, args.out_dim, z)
@@ -56,7 +70,7 @@ def gradient_descent(D0, dim, color):
 	print("X: ")
 	print(X)
 	print("D: ")
-	for iteration in range(0, 100):
+	for iteration in range(0, 250):
 		print("Iteration: ")
 		print(iteration)
 		#update distance matrix
