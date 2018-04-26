@@ -48,8 +48,8 @@ def main():
     X = gradient_descent(shortest_paths, args.out_dim)
 
     rc = recall(dist_matrix,d_matrix(X),0.1)
-
     pr = precision(dist_matrix,d_matrix(X),0.1)
+    
     print("precision:")
     print(pr)
     print("recall:")
@@ -58,40 +58,41 @@ def main():
     plot_data(X, z)
 
 def gradient_descent(D0, dim):
-	data_length = D0.shape[0]
+    data_length = D0.shape[0]
 
-	#distance matrix in lower dimensional space
-	D = np.random.rand(data_length, data_length)
-	#data matrix in lower dimensional space
-	X = np.random.rand(data_length, dim)
+    #distance matrix in lower dimensional space
+    D = np.random.rand(data_length, data_length)
+    #data matrix in lower dimensional space
+    X = np.random.rand(data_length, dim)
 
-	for iteration in range(0, 500):
-		print("Iteration: " + str(iteration))
+    iterations = 500
+    for iteration in range(0, iterations):
+        print("Iteration: " + str(iteration) + " / " + str(iterations))
 
-		#update distance matrix
-		df = pandas.DataFrame(X, columns=['xcord', 'ycord'])
-		D = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index).values
+        #update distance matrix
+        df = pandas.DataFrame(X, columns=['xcord', 'ycord'])
+        D = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index).values
 
-		#calculate gradient
-		d_d = (D0 - D) / D
-		np.fill_diagonal(d_d,0)
-		d_d_rowsum = d_d @ np.ones((data_length,dim))
-		gradient = (d_d @ X - d_d_rowsum * X) * 2
+        #calculate gradient
+        d_d = (D0 - D) / D
+        np.fill_diagonal(d_d,0)
+        d_d_rowsum = d_d @ np.ones((data_length,dim))
+        gradient = (d_d @ X - d_d_rowsum * X) * 2
 
-		#normalize gradient to unit length
-		magnitude = math.sqrt(np.sum(gradient**2))
-		gradient = gradient / magnitude
+        #normalize gradient to unit length
+        magnitude = math.sqrt(np.sum(gradient**2))
+        gradient = gradient / magnitude
 
-		#update X
-		X = X - (gradient * 0.5)
+        #update X
+        X = X - (gradient * 0.5)
 
-	print("Updated X: ")
-	print(X)
+    print("Updated X: ")
+    print(X)
 
-	print("Pairwise distances in reduced dimension")
-	print(D)
+    print("Pairwise distances in reduced dimension")
+    print(D)
 
-	return X
+    return X
 
 def plot_data(data_matrix, color):
     vector1 = data_matrix[:,0]
@@ -117,15 +118,17 @@ def precision(o, re, radius):
     original = np.copy(o)
     reduction = np.copy(re)
 
+    #1 true, 0 false
     original[original > radius] = 0
     original[original > 0] = 1
 
+    #2 true, -2 false
     reduction[reduction > radius] = -2
     reduction[reduction >= 0] = 2
 
     combined = original + reduction
 
-    #combined[combined % 2 == 1 and combined > 0] = 5
+    #if both conditions true 1, otherwise 0
     combined[combined < 0] = 0
     combined[combined % 2 == 0] = 0
     combined[combined > 0] = 1
@@ -135,7 +138,6 @@ def precision(o, re, radius):
     pr = 0
 
     for i in range(0,n):
-        print(n)
         c = np.argwhere(combined[i,:] == 1).tolist()
         o = np.argwhere(original[i,:] == 1).tolist()
         inter = len(intersect(c,o))
@@ -148,35 +150,32 @@ def recall(o, re, radius):
     original = np.copy(o)
     reduction = np.copy(re)
 
+    #1 true, 0 false
     original[original > radius] = 0
     original[original > 0] = 1
 
-    print(original)
-    print(reduction)
-
+    #2 true, -2 false
     reduction[reduction > radius] = -2
     reduction[reduction >= 0] = 2
 
     combined = original + reduction
 
-    #combined[combined % 2 == 1 and combined > 0] = 5
+    #if both conditions true 1, otherwise 0
     combined[combined < 0] = 0
     combined[combined % 2 == 0] = 0
     combined[combined > 0] = 1
 
     n = original.shape[0]
 
-    pr = 0
+    rc = 0
 
     for i in range(0,n):
         c = np.argwhere(combined[i,:] == 1).tolist()
-        print(c)
         o = np.argwhere(reduction[i,:] == 2).tolist()
-        print(o)
         inter = len(c)
-        pr += inter / len(o)
+        rc += inter / len(o)
 
-    return pr / n
+    return rc / n
 
 if __name__ == '__main__':
 	main()
