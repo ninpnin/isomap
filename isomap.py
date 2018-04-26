@@ -28,7 +28,7 @@ def main():
     df = pandas.DataFrame(data)
 
     #calculate pairwise distances
-    dist_matrix = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index).values
+    dist_matrix = pandas.DataFrame(distance_matrix(df.values, df.values)).values
 
     #find k closest neighbors for each data point
     D0 = np.zeros(dist_matrix.shape)
@@ -36,13 +36,11 @@ def main():
     for index in range(0, dist_matrix.shape[0]):
     	vector = dist_matrix[:,index]
     	k_smallest = np.argpartition(vector, args.k)[:args.k]
-    	print(args.k+1)
     	for k_index in k_smallest:
     		D0[k_index, index] = dist_matrix[k_index, index]
 
     #find distances in graph of k neighbors (dijkstra)
     shortest_paths = sparse.csgraph.shortest_path(D0,'D',False)
-    print(shortest_paths)
 
     #minimize error in distances in a lower dimensional space
     X = gradient_descent(shortest_paths, args.out_dim)
@@ -70,8 +68,8 @@ def gradient_descent(D0, dim):
         print("Iteration: " + str(iteration) + " / " + str(iterations))
 
         #update distance matrix
-        df = pandas.DataFrame(X, columns=['xcord', 'ycord'])
-        D = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index).values
+        df = pandas.DataFrame(X)
+        D = pandas.DataFrame(distance_matrix(df.values, df.values)).values
 
         #calculate gradient
         d_d = (D0 - D) / D
@@ -107,7 +105,7 @@ def plot_data(data_matrix, color):
 def d_matrix(X):
 
     df = pandas.DataFrame(X)
-    D = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index).values
+    D = pandas.DataFrame(distance_matrix(df.values, df.values)).values
     return D
 
 def intersect(b1, b2):
