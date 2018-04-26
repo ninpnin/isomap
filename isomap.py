@@ -14,23 +14,18 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', type=str, default="toydata.csv", help='path of data file')
-    parser.add_argument('--k', type=str, default=11, help='number of nearest neighbors for the k-means')
-    parser.add_argument('--out_dim', type=str, default=2, help='dimensionality of the output')
+    parser.add_argument('--k', type=int, default=11, help='number of nearest neighbors for the k-means')
+    parser.add_argument('--out_dim', type=int, default=2, help='dimensionality of the output')
     args = parser.parse_args()
 
     #read data from csv, convert to data matrix
-    colnames = ['s', 'x1', 'x2']
-    data = pandas.read_csv('toydata.csv', names=colnames)
-    x0 = data.x1.tolist()[1:1000]
-    y0 = data.x2.tolist()[1:1000]
-    z0 = data.s.tolist()[1:1000]
+    data = pandas.read_csv('toydata.csv').values
 
-    x = [float(i) for i in x0]
-    y = [float(i) for i in y0]
-    z = [float(i) for i in z0]
-
-    data = np.column_stack((x,y))
-    df = pandas.DataFrame(data, columns=['xcord', 'ycord'])
+    #delete label row
+    data = np.delete(data, 0, 0).astype(np.float)
+    print(data)
+    z = data[:,0]
+    df = pandas.DataFrame(data)
 
     #calculate pairwise distances
     dist_matrix = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index).values
@@ -52,6 +47,14 @@ def main():
     #minimize error in distances in a lower dimensional space
     X = gradient_descent(shortest_paths, args.out_dim)
 
+    rc = recall(dist_matrix,d_matrix(X),0.1)
+
+    pr = precision(dist_matrix,d_matrix(X),0.1)
+    print("precision:")
+    print(pr)
+    print("recall:")
+    print(rc)
+
     plot_data(X, z)
 
 def gradient_descent(D0, dim):
@@ -62,7 +65,7 @@ def gradient_descent(D0, dim):
 	#data matrix in lower dimensional space
 	X = np.random.rand(data_length, dim)
 
-	for iteration in range(0, 100):
+	for iteration in range(0, 500):
 		print("Iteration: " + str(iteration))
 
 		#update distance matrix
@@ -73,14 +76,14 @@ def gradient_descent(D0, dim):
 		d_d = (D0 - D) / D
 		np.fill_diagonal(d_d,0)
 		d_d_rowsum = d_d @ np.ones((data_length,dim))
-		gradient = (d_d @ X - d_d_rowsum * X)* 2
+		gradient = (d_d @ X - d_d_rowsum * X) * 2
 
 		#normalize gradient to unit length
 		magnitude = math.sqrt(np.sum(gradient**2))
 		gradient = gradient / magnitude
 
 		#update X
-		X = X - (gradient * 0.2)
+		X = X - (gradient * 0.5)
 
 	print("Updated X: ")
 	print(X)
@@ -100,6 +103,80 @@ def plot_data(data_matrix, color):
     plt.colorbar(sc)
     plt.show()
 
+def d_matrix(X):
+
+    df = pandas.DataFrame(X)
+    D = pandas.DataFrame(distance_matrix(df.values, df.values), index=df.index, columns=df.index).values
+    return D
+
+def intersect(b1, b2):
+    return [val for val in b1 if val in b2]
+
+def precision(o, re, radius):
+
+    original = np.copy(o)
+    reduction = np.copy(re)
+
+    original[original > radius] = 0
+    original[original > 0] = 1
+
+    reduction[reduction > radius] = -2
+    reduction[reduction >= 0] = 2
+
+    combined = original + reduction
+
+    #combined[combined % 2 == 1 and combined > 0] = 5
+    combined[combined < 0] = 0
+    combined[combined % 2 == 0] = 0
+    combined[combined > 0] = 1
+
+    n = original.shape[0]
+
+    pr = 0
+
+    for i in range(0,n):
+        print(n)
+        c = np.argwhere(combined[i,:] == 1).tolist()
+        o = np.argwhere(original[i,:] == 1).tolist()
+        inter = len(intersect(c,o))
+        pr += inter / len(o)
+
+    return pr / n
+
+def recall(o, re, radius):
+
+    original = np.copy(o)
+    reduction = np.copy(re)
+
+    original[original > radius] = 0
+    original[original > 0] = 1
+
+    print(original)
+    print(reduction)
+
+    reduction[reduction > radius] = -2
+    reduction[reduction >= 0] = 2
+
+    combined = original + reduction
+
+    #combined[combined % 2 == 1 and combined > 0] = 5
+    combined[combined < 0] = 0
+    combined[combined % 2 == 0] = 0
+    combined[combined > 0] = 1
+
+    n = original.shape[0]
+
+    pr = 0
+
+    for i in range(0,n):
+        c = np.argwhere(combined[i,:] == 1).tolist()
+        print(c)
+        o = np.argwhere(reduction[i,:] == 2).tolist()
+        print(o)
+        inter = len(c)
+        pr += inter / len(o)
+
+    return pr / n
 
 if __name__ == '__main__':
 	main()
