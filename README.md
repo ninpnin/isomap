@@ -1,3 +1,3 @@
 # isomap
 
-[ISOMAP](https://en.wikipedia.org/wiki/Isomap) dimension reduction algorithm implemented in python.
+The [ISOMAP](https://en.wikipedia.org/wiki/Isomap) dimension reduction algorithm implemented in Python.
